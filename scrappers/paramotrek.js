@@ -16,7 +16,7 @@ var methods = {
     'run': function (response) {
         return new Promise(async (resolve, reject) => {
             try {
-                const browser = await puppeteer.launch();
+                const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
                 var page = await browser.newPage();
                 await page.goto(url);
                 var html = await page.content();
