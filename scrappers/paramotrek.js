@@ -2,11 +2,9 @@
 var express = require('express');
 var puppeteer = require('puppeteer');
 var fs = require('fs');
-var json2csv = require('json2csv').Parser;
 var $ = require('cheerio');
-var url = 'https://paramotrek.com/'
-var items = [];
-var csv_fields = ['titulo', 'enlace', 'imagen', 'descripcion'];
+var url = 'https://paramotrek.com/';
+var path = require('path');
 
 
 var info = {
@@ -15,7 +13,7 @@ var info = {
 }
 
 var methods = {
-    'run': function () {
+    'run': function (response) {
         return new Promise(async (resolve, reject) => {
             try {
                 const browser = await puppeteer.launch();
@@ -30,7 +28,15 @@ var methods = {
                     task.push(methods.getParticularNavigationOptions(browser, option));
                 });
 
-                await Promise.all(task).then(methods.printFile).catch(reject);
+                await Promise.all(task)
+                    .then(methods.printFile)
+                    .then(
+                    function (filename) {
+                        console.log('Descargando');
+                        var full_path_file = path.join(__dirname, '..', filename);
+                        response.setHeader('Content-Type', 'application/json');
+                        response.download(full_path_file, filename);
+                    }).catch(reject);
                 console.log('Terminando');
             } catch (e) {
                 return reject(e);
@@ -144,8 +150,10 @@ var methods = {
     },
     'printFile': function (eee) {
         console.log('Imprimiendo');
+        var filename = 'results.json';
         var content_file = JSON.stringify(info.data);
-        fs.writeFileSync('results.json', content_file);
+        fs.writeFileSync(filename, content_file);
+        return filename;
     }
 
 }
